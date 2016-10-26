@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">ChoferApp</string>
+    <string name="patente">Patente</string>
+    <string name="EnviarPatente">Enviar</string>
+    <string name="origen">Origen</string>
+    <string name="destino">Destino</string>
+    <string name="tituloComent">Título:</string>
+    <string name="coment">Comentario:</string>
+    <string name="Validar">Validar</string>
+    <string name="Entrar">Entrar</string>
+    <string name="paraderos">Paraderos</string>
+    <string name="terminarRecorrido">Terminar Recorrido</string>
+    <string name="title_activity_maps">Map</string>
+</resources>

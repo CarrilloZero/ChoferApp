@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="busesapp.choferapp.MenuActivity">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/tableLayout">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/paraderos"
+                android:id="@+id/textView4"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:layout_column="2" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ListView android:id="@+id/lwParadero"
+                android:layout_column="2"
+                android:choiceMode="none" />
+
+            <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/lwCountParadero"
+                android:layout_column="32"
+                android:choiceMode="none" />
+        </TableRow>
+    </TableLayout>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/fabComentario"
+        android:src="@android:drawable/sym_action_chat"
+        android:tint="#ff0000"
+        android:contentDescription="Comentario"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listAlerta"
+        android:layout_below="@+id/tableLayout"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/fabComentario"
+        android:choiceMode="none"
+        android:clickable="false"
+        android:divider="#909090"
+        android:dividerHeight="1dp"
+        android:textAlignment="textEnd"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/terminarRecorrido"
+        android:id="@+id/btnFinish"
+        android:layout_below="@+id/listAlerta"
+        android:layout_centerHorizontal="true"
+        android:onClick="onClickFinish"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Longitud"
+        android:id="@+id/txtLong"
+        android:layout_below="@+id/tableLayout"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Latitud"
+        android:id="@+id/txtLat"
+        android:layout_below="@+id/tableLayout"
+        android:layout_toEndOf="@+id/txtLong" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnAct"
+        android:layout_alignBottom="@+id/txtLat"
+        android:layout_alignStart="@+id/btnFinish"
+        android:layout_marginStart="103dp"
+        android:src="@android:drawable/ic_menu_rotate" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mapa"
+        android:id="@+id/btnMapa"
+        android:layout_below="@+id/listAlerta"
+        android:layout_alignParentStart="true" />
+
+</RelativeLayout>
