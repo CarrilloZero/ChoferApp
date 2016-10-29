@@ -40,15 +40,13 @@ import busesapp.choferapp.beans.Usuario;
 import busesapp.choferapp.beans.UsuarioDAO;
 
 public class PrincipalActivity extends AppCompatActivity {
-    private Spinner spn1;
-    private Spinner spn2;
+    private Spinner spnOrigen,spnDestino;
     private ImageButton imgBTN;
     private SQLiteDatabase db;
     private Button btnEnviar;
-    private EditText ptn1;
-    private EditText ptn2;
-    private EditText ptn3;
-    private TextView txt;
+    private EditText etPatente1,etPatente2,etPatente3;
+    private TextView tvCorreo;
+    private String correo;
 
 
 
@@ -57,36 +55,9 @@ public class PrincipalActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_principal);
 
-        imgBTN = (ImageButton)findViewById(R.id.imageButton);
-        imgBTN.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(PrincipalActivity.this, ComentarioActivity.class);
-                startActivity(intent);
-            }
-        });
-        String correo="";
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
-        Account[] accounts = AccountManager.get(this).getAccounts();
-        for (Account account : accounts) {
-            if (emailPattern.matcher(account.name).matches()) {
-                correo = (account.name).toString();
-
-            }
-        }
-        correo="daniel.carrillo05@hotmail.com";
-
-        txt = (TextView)findViewById(R.id.txtCorreo);
-        txt.setText(correo);
-
-        ParaderoDAO para = new ParaderoDAO(this);
-        para.insertar(10,20,"Paradero 1");
-        para.insertar(20,30,"Paradero 2");
-        para.insertar(30,40,"Paradero 3");
-        para.insertar(40,50,"Paradero 4");
-        para.insertar(50,50,"Paradero 5");
-
-
+        correo = getIntent().getStringExtra("Correo");
+        tvCorreo = (TextView) findViewById(R.id.tvCorreo);
+        tvCorreo.setText(correo);
 
 
         //DataHelper dataHelper = new DataHelper(this);
@@ -95,32 +66,16 @@ public class PrincipalActivity extends AppCompatActivity {
         ParaderoDAO paradero=new ParaderoDAO(this);
 
 
-        //paradero.insertar(2,2, "Hito2");
-        //paradero.insertar(3,3, "Hito3");
-
-
-        //usuario.insertar(1.0,1.0,"sonic_x17@hotmail.com");
-        /*ciudad.eliminar("San Pablo");
-        ciudad.insertar("San Pablo");
-        ciudad.insertar("Río Negro");
-
-        dataHelper.insertarCiudad("Osorno");
-        dataHelper.insertarCiudad("La Unión");
-        dataHelper.insertarCiudad("Purranque");
-        dataHelper.insertarCiudad("Río Bueno");ba
-        dataHelper.insertarCiudad("Entrelagos");
-        dataHelper.eliminar("Entrelagos");
-*/
 
 
         ArrayList<String> listaCiudad = ciudad.listadoCiudad();
-        spn1 = (Spinner) findViewById(R.id.spnOrigen);
-        spn2 = (Spinner) findViewById(R.id.spnDestino);
+        spnOrigen = (Spinner) findViewById(R.id.spnOrigen);
+        spnDestino = (Spinner) findViewById(R.id.spnDestino);
         ArrayAdapter<String> adapter= new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, listaCiudad);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spn1.setAdapter(adapter);
-        spn2.setAdapter(adapter);
-        spn2.setSelection(1);
+        spnOrigen.setAdapter(adapter);
+        spnDestino.setAdapter(adapter);
+        spnDestino.setSelection(1);
 
 
 
@@ -128,11 +83,11 @@ public class PrincipalActivity extends AppCompatActivity {
 
     public void onClickEnviar(View v) {
         btnEnviar = (Button) findViewById(R.id.btnEnviar);
-        ptn1 = (EditText) findViewById(R.id.txtPatente1);
-        ptn2 = (EditText) findViewById(R.id.txtPatente2);
-        ptn3 = (EditText) findViewById(R.id.txtPatente3);
-        spn1 = (Spinner) findViewById(R.id.spnOrigen);
-        spn2 = (Spinner) findViewById(R.id.spnDestino);
+        etPatente1 = (EditText) findViewById(R.id.txtPatente1);
+        etPatente2 = (EditText) findViewById(R.id.txtPatente2);
+        etPatente3 = (EditText) findViewById(R.id.txtPatente3);
+        spnOrigen = (Spinner) findViewById(R.id.spnOrigen);
+        spnDestino = (Spinner) findViewById(R.id.spnDestino);
         String txt1;
         String txt2;
         String txt3;
@@ -148,15 +103,15 @@ public class PrincipalActivity extends AppCompatActivity {
             for (int i = 0; i < 3; i++) {
 
                 if (i == 0) {
-                    txt1 = ptn1.getText().toString();
+                    txt1 = etPatente1.getText().toString();
                     patente = patente + txt1 + "-";
                 }
                 if (i == 1) {
-                    txt2 = ptn2.getText().toString();
+                    txt2 = etPatente2.getText().toString();
                     patente = patente + txt2 + "-";
                 }
                 if (i == 2) {
-                    txt3 = ptn3.getText().toString();
+                    txt3 = etPatente3.getText().toString();
                     patente = patente + txt3;
                 }
 
@@ -166,8 +121,8 @@ public class PrincipalActivity extends AppCompatActivity {
             String laHoraDeDestino = "";
 
 
-            origen = spn1.getSelectedItem().toString();
-            destino = spn2.getSelectedItem().toString();
+            origen = spnOrigen.getSelectedItem().toString();
+            destino = spnDestino.getSelectedItem().toString();
 
             if(origen.equals(destino)){
                 Toast.makeText(this, "Ingrese ciudades válidas", Toast.LENGTH_LONG);
