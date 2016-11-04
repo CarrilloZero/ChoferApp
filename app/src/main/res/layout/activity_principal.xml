@@ -10,15 +10,6 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="busesapp.choferapp.PrincipalActivity">
 
-    }
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Text"
-        android:id="@+id/tvCorreo"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -27,34 +18,8 @@
         android:text="Patente"
         android:id="@+id/textView2"
         android:layout_marginTop="44dp"
-        android:layout_below="@+id/tvCorreo"
         android:layout_alignParentStart="true"
         android:layout_marginStart="36dp" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/etPatente1"
-        android:autoText="false"
-        android:layout_alignBottom="@+id/textView2"
-        android:layout_centerHorizontal="true" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/etPatente2"
-        android:autoText="false"
-        android:layout_alignTop="@+id/etPatente1"
-        android:layout_toEndOf="@+id/tvCorreo" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/etPatente3"
-        android:autoText="false"
-        android:layout_marginStart="28dp"
-        android:layout_alignTop="@+id/etPatente2"
-        android:layout_toEndOf="@+id/etPatente2" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -62,16 +27,16 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Origen"
         android:id="@+id/tvOrigen"
-        android:layout_marginTop="41dp"
-        android:layout_below="@+id/textView2"
-        android:layout_alignEnd="@+id/textView2" />
+        android:layout_above="@+id/spnDestino"
+        android:layout_alignStart="@+id/textView2"
+        android:layout_marginBottom="34dp" />
 
     <Spinner
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/spnOrigen"
         android:layout_alignBottom="@+id/tvOrigen"
-        android:layout_alignStart="@+id/etPatente1" />
+        android:layout_alignStart="@+id/btnEnviarAlerta" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -79,8 +44,7 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Destino"
         android:id="@+id/etDestino"
-        android:layout_marginTop="43dp"
-        android:layout_below="@+id/tvOrigen"
+        android:layout_centerVertical="true"
         android:layout_alignStart="@+id/tvOrigen" />
 
     <Spinner
@@ -94,9 +58,37 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Enviar"
-        android:id="@+id/btnEnviar"
+        android:id="@+id/btnEnviarAlerta"
         android:layout_below="@+id/spnDestino"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="47dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvCorreo"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentBottom="false"
+        android:layout_alignWithParentIfMissing="false"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/etPatente"
+        android:layout_alignBottom="@+id/textView2"
+        android:layout_alignEnd="@+id/tvCorreo"
+        android:layout_alignStart="@+id/spnOrigen" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Desconectar"
+        android:id="@+id/btnDesconectar"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

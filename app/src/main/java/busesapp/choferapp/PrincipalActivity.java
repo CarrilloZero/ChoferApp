@@ -1,52 +1,43 @@
 package busesapp.choferapp;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Patterns;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.DateFormat;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-import java.util.regex.Pattern;
 
-import busesapp.choferapp.beans.Bus;
-import busesapp.choferapp.beans.BusDAO;
-import busesapp.choferapp.beans.Chofer;
-import busesapp.choferapp.beans.ChoferDAO;
 import busesapp.choferapp.beans.Ciudad;
 import busesapp.choferapp.beans.CiudadDAO;
-import busesapp.choferapp.beans.Empresa;
-import busesapp.choferapp.beans.EmpresaDAO;
-import busesapp.choferapp.beans.HaceDAO;
-import busesapp.choferapp.beans.ParaderoDAO;
-import busesapp.choferapp.beans.Recorrido;
-import busesapp.choferapp.beans.RecorridoDAO;
-import busesapp.choferapp.beans.Usuario;
-import busesapp.choferapp.beans.UsuarioDAO;
 
 public class PrincipalActivity extends AppCompatActivity {
     private Spinner spnOrigen,spnDestino;
-    private ImageButton imgBTN;
-    private SQLiteDatabase db;
-    private Button btnEnviar;
-    private EditText etPatente1,etPatente2,etPatente3;
+    private Button btnEnviar,btnDesconectar;
+    private EditText etPatente;
     private TextView tvCorreo;
     private String correo;
+    private Context ctx=this;
+    private ProgressDialog pdialog = null;
 
 
 
@@ -59,14 +50,10 @@ public class PrincipalActivity extends AppCompatActivity {
         tvCorreo = (TextView) findViewById(R.id.tvCorreo);
         tvCorreo.setText(correo);
 
+        etPatente = (EditText) findViewById(R.id.etPatente);
 
         //DataHelper dataHelper = new DataHelper(this);
         CiudadDAO ciudad = new CiudadDAO(this);
-        UsuarioDAO usuario = new UsuarioDAO(this);
-        ParaderoDAO paradero=new ParaderoDAO(this);
-
-
-
 
         ArrayList<String> listaCiudad = ciudad.listadoCiudad();
         spnOrigen = (Spinner) findViewById(R.id.spnOrigen);
@@ -77,200 +64,216 @@ public class PrincipalActivity extends AppCompatActivity {
         spnDestino.setAdapter(adapter);
         spnDestino.setSelection(1);
 
-
-
-    }
-
-    public void onClickEnviar(View v) {
-        btnEnviar = (Button) findViewById(R.id.btnEnviar);
-        etPatente1 = (EditText) findViewById(R.id.txtPatente1);
-        etPatente2 = (EditText) findViewById(R.id.txtPatente2);
-        etPatente3 = (EditText) findViewById(R.id.txtPatente3);
-        spnOrigen = (Spinner) findViewById(R.id.spnOrigen);
-        spnDestino = (Spinner) findViewById(R.id.spnDestino);
-        String txt1;
-        String txt2;
-        String txt3;
-        String patente = "";
-        String origen = "";
-        String destino = "";
-
-        try {
-            Date date = new Date();
-            DateFormat hourFormat = new SimpleDateFormat("HH:mm");
-
-
-            for (int i = 0; i < 3; i++) {
-
-                if (i == 0) {
-                    txt1 = etPatente1.getText().toString();
-                    patente = patente + txt1 + "-";
-                }
-                if (i == 1) {
-                    txt2 = etPatente2.getText().toString();
-                    patente = patente + txt2 + "-";
-                }
-                if (i == 2) {
-                    txt3 = etPatente3.getText().toString();
-                    patente = patente + txt3;
-                }
-
-
-            }
-            String laHoraDeOrigen = "";
-            String laHoraDeDestino = "";
-
-
-            origen = spnOrigen.getSelectedItem().toString();
-            destino = spnDestino.getSelectedItem().toString();
-
-            if(origen.equals(destino)){
-                Toast.makeText(this, "Ingrese ciudades válidas", Toast.LENGTH_LONG);
-            }
-
-
-
-            long ahora = System.currentTimeMillis();
-            Date fecha = new Date(ahora);
-            DateFormat df = new SimpleDateFormat("dd/MM/yy");
-            String salida = df.format(fecha);
-            Calendar calendario = Calendar.getInstance();
-            calendario.setTimeInMillis(ahora);
-            int horaOrigen = calendario.get(Calendar.HOUR_OF_DAY);
-            int minutoOrigen = calendario.get(Calendar.MINUTE);
-            int minutoDestino = minutoOrigen + 45;
-            int horaDestino = horaOrigen;
-            if (minutoDestino >= 60) {
-                horaDestino = horaDestino + 1;
-                minutoDestino = minutoDestino - 60;
-            }
-            try {
-                String hour1 = String.valueOf(horaOrigen);
-                String minute1 = String.valueOf(minutoOrigen);
-                laHoraDeOrigen = hour1 + ":" + minute1;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                String hour2 = String.valueOf(horaDestino);
-                String minute2 = String.valueOf(minutoDestino);
-                laHoraDeDestino = hour2 + ":" + minute2;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            Date now = new Date();
-            String format1 = new SimpleDateFormat("EEE", Locale.ENGLISH).format(now);
-            String dia = traductorDia(format1);
-
-            CiudadDAO ciudadQ = new CiudadDAO(this);
-            Ciudad ciuori = ciudadQ.buscarNombre(origen);
-            Ciudad ciudes = ciudadQ.buscarNombre(destino);
-            int ciudadOrigenID = ciuori.getId();
-            int ciudadDestinoID = ciudes.getId();
-
-            BusDAO busQ = new BusDAO(this);
-            Bus bus = busQ.buscar(patente);
-            int busID = bus.getId();
-            int busEMp = bus.getEmpresa_Id();
-
-            String correo = "";
-            Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
-            Account[] accounts = AccountManager.get(this).getAccounts();
-            for (Account account : accounts) {
-                if (emailPattern.matcher(account.name).matches()) {
-                    correo = (account.name).toString();
-
-                }
-            }
-            correo="daniel.carrillo05@hotmail.com";
-
-
-            UsuarioDAO usu = new UsuarioDAO(this);
-            Usuario usuario = usu.buscar(correo);
-            int user = usuario.getId();
-            int enterprise = 0;
-
-            try {
-                EmpresaDAO emp = new EmpresaDAO(this);
-                Empresa empresa = emp.buscar(busEMp);
-                enterprise = empresa.getId();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            ChoferDAO choQ = new ChoferDAO(this);
-            Chofer cho = choQ.buscar(user);
-            int choferOn = 1;
-            //choQ.modificar(cho.getId(), user, busID, enterprise, choferOn,contraseña);
-
-            RecorridoDAO recorridoQ = new RecorridoDAO(this);
-            Recorrido recorr = recorridoQ.buscarDosCiudades(ciudadOrigenID, ciudadDestinoID);
-            int recorridoID = recorr.getId();
-
-            HaceDAO hace_recorrido = new HaceDAO(this);
-
-            boolean bool = hace_recorrido.insertar(laHoraDeOrigen, laHoraDeDestino, busID, recorridoID);
-            btnEnviar = (Button) findViewById(R.id.button);
-            if (bool == true) {
-                btnEnviar.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(PrincipalActivity.this, MenuActivity.class);
-                        startActivity(intent);
-                    }
-                });
-            } else {
-                Toast.makeText(this, "Error en el envío", Toast.LENGTH_LONG);
-            }
-        }catch(Exception e){
-            e.printStackTrace();
-            Toast toast = new Toast(this).makeText(this,"Error en el ingreso de datos", Toast.LENGTH_LONG);
-            toast.show();
-        }
-
-
-
-
-
-/*
-        btnEnviar.setOnClickListener(new View.OnClickListener(){
+        btnEnviar = (Button) findViewById(R.id.btnEnviarAlerta);
+        btnEnviar.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(PrincipalActivity.this, MenuActivity.class);
+            public void onClick(View v) {
+
+                String getPatente;
+                String ciudadOrigen = "";
+                String ciudadDestino = "";
+
+                try {
+                    ciudadOrigen = spnOrigen.getSelectedItem().toString();
+                    ciudadDestino = spnDestino.getSelectedItem().toString();
+
+                    if(ciudadOrigen.equals(ciudadDestino)){
+                        Toast.makeText(ctx, "Ingrese ciudades válidas", Toast.LENGTH_LONG);
+                    }else
+                    {
+                        getPatente = etPatente.getText().toString();
+                        verificarPatente(getPatente);
+
+                    }
+
+                }catch(Exception e){
+                    e.printStackTrace();
+                    Toast.makeText(ctx,"Error en el ingreso de datos", Toast.LENGTH_LONG);
+                }
+            }
+        });
+
+        btnDesconectar = (Button) findViewById(R.id.btnDesconectar);
+        btnDesconectar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ctx, LoginActivity.class);
                 startActivity(intent);
             }
-        });*/
+        });
+
     }
 
+    public void verificarPatente(String patente){
+        try{
+            String pat = patente;
 
-    @Override
-    public void onBackPressed() {
+            if(pat.equals("")||pat.equals(null))
+            {
+                Toast.makeText(ctx, "Inserte campos validos", Toast.LENGTH_LONG).show();
+            }
+            else
+            {
+                BackGround b = new BackGround();
+                b.execute(pat);
+                pdialog = ProgressDialog.show(this, "", "Verificando Datos...", true);
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 
-    public String traductorDia(String day){
+    class BackGround extends AsyncTask<String, String, String>
+    {
+
+        @Override
+        protected String doInBackground(String... params) {
+            String pat = params[0];
+            String data="";
+            int tmp;
+
+            try {
+                URL url = new URL("http://www.busearch.pe.hu/verificarpatente.php");
+                String urlParams = "Patente="+pat;
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setDoOutput(true);
+                OutputStream os = httpURLConnection.getOutputStream();
+                os.write(urlParams.getBytes());
+                os.flush();
+                os.close();
+
+                InputStream is = httpURLConnection.getInputStream();
+                while((tmp=is.read())!=-1){
+                    data+= (char)tmp;
+                }
+
+                is.close();
+                httpURLConnection.disconnect();
+
+                return data;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return "Exception: "+e.getMessage();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "Exception: "+e.getMessage();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s)
+        {
+            String pat;
+            pdialog.dismiss();
+            try {
+
+                JSONObject root = new JSONObject(s);
+                pat= root.getString("BusId");
+                int busid = Integer.parseInt(pat);
+
+                if (pat.equals("") || pat.equals(null)) {
+
+                    Toast.makeText(ctx, "Patente no valida", Toast.LENGTH_LONG).show();
+
+                }else {
+                    String getPatente = etPatente.getText().toString();
+                    String ciudadOrigen = spnOrigen.getSelectedItem().toString();
+                    String ciudadDestino = spnDestino.getSelectedItem().toString();
+                    CiudadDAO ciudadQ = new CiudadDAO(ctx);
+                    Ciudad ciuori = ciudadQ.buscarNombre(ciudadOrigen);
+                    Ciudad ciudes = ciudadQ.buscarNombre(ciudadDestino);
+
+                    String fecha = obtenerFecha();
+                    String dia = obtenerDia();
+                    String hora = obtenerHora();
+                    String ciuOrigen = ciuori.getNombre();
+                    String ciuDestino = ciudes.getNombre();
+
+                    Intent intent = new Intent(ctx, MenuActivity.class);
+                    intent.putExtra("Fecha",fecha);
+                    intent.putExtra("Dia",dia);
+                    intent.putExtra("Hora",hora);
+                    intent.putExtra("CiudadOrigen",ciuOrigen);
+                    intent.putExtra("CiudadDestino",ciuDestino);
+                    intent.putExtra("Correo",correo);
+                    intent.putExtra("BusId",busid);
+                    startActivity(intent);
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Toast.makeText(ctx, "Patente no valida", Toast.LENGTH_LONG).show();
+            }
+
+        }
+    }
+
+    public static String obtenerFecha(){
+        try {
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+            String currentTimeStamp = dateFormat.format(new Date()); // Find todays date
+
+            return currentTimeStamp;
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return null;
+        }
+    }
+
+    public static String obtenerDia(){
+        try {
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("E");
+            String currentTimeStamp = dateFormat.format(new Date()); // Find todays date
+            String dia = traductorDia(currentTimeStamp);
+            return dia;
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return null;
+        }
+    }
+
+    public static String obtenerHora(){
+        try {
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+            String currentTimeStamp = dateFormat.format(new Date()); // Find todays date
+
+            return currentTimeStamp;
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return null;
+        }
+    }
+
+    public static String traductorDia(String day){
         String dia = null;
 
-        if(day.equals("Mon")){
+        if(day.equals("lun.")){
             dia = "Lunes";
         }
-        if(day.equals("Thu")){
+        if(day.equals("mar.")){
             dia = "Martes";
         }
-        if(day.equals("Wed")){
+        if(day.equals("mié.")){
             dia = "Miercoles";
         }
-        if(day.equals("Tue")){
+        if(day.equals("jue.")){
             dia = "Jueves";
         }
-        if(day.equals("Fri")){
+        if(day.equals("vie.")){
             dia = "Viernes";
         }
-        if(day.equals("Sat")){
+        if(day.equals("sab.")){
             dia = "Sabado";
         }
-        if(day.equals("Sun")){
+        if(day.equals("dom.")){
             dia = "Domingo";
         }
 

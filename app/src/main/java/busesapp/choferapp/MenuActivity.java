@@ -1,289 +1,273 @@
 package busesapp.choferapp;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Patterns;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.regex.Pattern;
 
-import busesapp.choferapp.beans.Chofer;
-import busesapp.choferapp.beans.ChoferDAO;
-import busesapp.choferapp.beans.HaceDAO;
-import busesapp.choferapp.beans.Notificacion;
-import busesapp.choferapp.beans.NotificacionDAO;
-import busesapp.choferapp.beans.ParaderoDAO;
-import busesapp.choferapp.beans.Usuario;
-import busesapp.choferapp.beans.UsuarioDAO;
-
-public class MenuActivity extends AppCompatActivity {
+public class MenuActivity extends AppCompatActivity implements OnMapReadyCallback,View.OnClickListener {
 
     private ImageButton fabComentario;
-    private ListView listParadero, countParadero, listAlerta;
-    TextView longi, lati;
-    private ArrayAdapter adapter;
-
+    private GoogleMap mMap;
+    double latitud, longitud;
+    Marker marcador;
+    private Context ctx=this;
+    private ProgressDialog pdialog = null;
+    private String dia,fecha,hora,ciudadOrigen,ciudadDestino,correo;
+    private int busId,haceid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
 
-        fabComentario = (ImageButton) findViewById(R.id.fabComentario);
-        fabComentario.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MenuActivity.this, ComentarioActivity.class);
-                startActivity(intent);
-            }
-        });
+        dia = getIntent().getStringExtra("Dia");
+        fecha = getIntent().getStringExtra("Fecha");
+        hora = getIntent().getStringExtra("Hora");
+        ciudadOrigen = getIntent().getStringExtra("CiudadOrigen");
+        ciudadDestino = getIntent().getStringExtra("CiudadDestino");
+        busId = getIntent().getExtras().getInt("BusId");
+        correo = getIntent().getStringExtra("Correo");
+
+        CrearHace hace = new CrearHace();
+        hace.crearHace(hora,ciudadOrigen,ciudadDestino,busId);
+
+        CambiarEstado estado = new CambiarEstado();
+        estado.cambiarEstado(correo,1,String.valueOf(busId));
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
 
-
-        GPSTracker gps = new GPSTracker(this);
-        gps.getLongitude();
-        gps.getLatitude();
-
-        longi = (TextView) findViewById(R.id.txtLong);
-        lati = (TextView) findViewById(R.id.txtLat);
-        longi.setText("Longitud: "+gps.getLongitude());
-        lati.setText("Latitud: "+gps.getLatitude());
-
-        ParaderoDAO paradero = new ParaderoDAO(this);
-
-        ArrayList<String> paraderos = paradero.listadoNombres();
-
-
-        listParadero = (ListView)findViewById(R.id.lwParadero);
-        adapter= new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, paraderos);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        listParadero.setAdapter(adapter);
-
-        listAlerta = (ListView)findViewById(R.id.listAlerta);
-
-        NotificacionDAO noti = new NotificacionDAO(this);
-        String correo="";
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
-        Account[] accounts = AccountManager.get(this).getAccounts();
-        for (Account account : accounts) {
-            if (emailPattern.matcher(account.name).matches()) {
-                correo = (account.name).toString();
-
-            }
-        }
-        correo="daniel.carrillo05@hotmail.com";
-
-
-        UsuarioDAO usu = new UsuarioDAO(this);
-
-        Usuario usuario = usu.buscar(correo);
-        int id = usuario.getId();
-
-        ArrayList<Notificacion> notis = noti.listado();
-        int count= notis.size();
-        int c = 0;
-        ArrayList<String>comentariosHora = new ArrayList<String>();
-        while(c<count) {
-            Notificacion notificacion = notis.get(0);
-            String alerta = notificacion.getHora()+" - "+notificacion.getComentario();
-            comentariosHora.add(alerta);
-
-            c++;
-        }
-        ArrayAdapter<String> adapterAlerts= new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, comentariosHora);
-        listParadero.setAdapter(adapterAlerts);
-
-    }
-
-
-
-
-    public void onClickFinish(View v){
-
-        String correo="";
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
-        Account[] accounts = AccountManager.get(this).getAccounts();
-        for (Account account : accounts) {
-            if (emailPattern.matcher(account.name).matches()) {
-                correo = (account.name).toString();
-
-            }
-        }
-        correo="daniel.carrillo05@hotmail.com";
-
-
-        UsuarioDAO usu = new UsuarioDAO(this);
-        Usuario usuario = usu.buscar(correo);
-
-        int user = usuario.getId();
-
-
-        ChoferDAO chofer = new ChoferDAO(this);
-        Chofer conductor = chofer.buscar(user);
-        int idBus = conductor.getBus_Id();
-        int idChofer = conductor.getId();
-        int idEmpresa = conductor.getEmpresa_Id();
-        String contraseña = conductor.getContraseña();
-
-        HaceDAO hace = new HaceDAO(this);
-        try {
-            hace.eliminar(idBus);
-            chofer.modificar(idChofer, user, idBus, idEmpresa, 0,contraseña);
-            Toast toast = Toast.makeText(this, "Viaje terminado con éxito!", Toast.LENGTH_LONG);
-            toast.show();
-        } catch(Exception e){
-            e.printStackTrace();
-            Toast toast = Toast.makeText(this, "ERROR", Toast.LENGTH_LONG);
-            toast.show();
-        }
-
-        Button btnTerminar = (Button)findViewById(R.id.btnFinish);
+        Button btnTerminar = (Button)findViewById(R.id.btnTerminar);
         btnTerminar.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
+                CambiarEstado ter = new CambiarEstado();
+                ter.cambiarEstado(correo,0,String.valueOf(busId));
                 Intent intent = new Intent(MenuActivity.this, PrincipalActivity.class);
+                intent.putExtra("Correo",correo);
                 startActivity(intent);
             }
         });
 
-        Button btnMapa = (Button)findViewById(R.id.btnMapa);
-        btnMapa.setOnClickListener(new View.OnClickListener() {
+        Button btnAlerta = (Button)findViewById(R.id.btnAlerta);
+        btnAlerta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MenuActivity.this, MapsActivity.class);
+                Intent intent = new Intent(MenuActivity.this, ComentarioActivity.class);
+                intent.putExtra("Hora",hora);
+                intent.putExtra("CiudadOrigen",ciudadOrigen);
+                intent.putExtra("CiudadDestino",ciudadDestino);
+                intent.putExtra("BusId",busId);
+                intent.putExtra("Correo",correo);
                 startActivity(intent);
             }
         });
 
-
-
     }
-
 
     @Override
-    public void onBackPressed() {
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        miUbicacion();
     }
 
+    private void miUbicacion(){
+        try{
+            LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            Location loc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            actualizarUbicacion(loc);
+            locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,10000,0,locListener);
+        }catch (SecurityException ex){
+            ex.printStackTrace();
+        }
+    }
 
-    class Sender extends AsyncTask<String, Object, String> {
+    private void actualizarUbicacion (Location location){
+        if(location != null){
+            try{
+                latitud = location.getLatitude();
+                longitud = location.getLongitude();
+                buscarHaceId(hora,ciudadOrigen,ciudadDestino,busId);
+                EnviarCoordenadas ec = new EnviarCoordenadas();
+                ec.enviarCoordenadas(latitud,longitud,haceid);
+                agregarMarcador(latitud, longitud);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void agregarMarcador (double latitud, double longitud){
+        LatLng coordenadas = new LatLng(latitud,longitud);
+        CameraUpdate miUbicacion = CameraUpdateFactory.newLatLngZoom(coordenadas,16);
+        if(marcador!= null){
+            marcador.remove();
+        }
+        marcador = mMap.addMarker(new MarkerOptions()
+                .position(coordenadas)
+                .title(""));
+        mMap.animateCamera(miUbicacion);
+    }
+
+    private void agregarTerminal(){
+        DbHelper helper = new DbHelper(this);
+        SQLiteDatabase db = helper.getReadableDatabase();
+        helper.openDataBase();
+        Cursor cursorTerrminales = db.rawQuery("SELECT Latitud,Longitud,Nombre FROM terminal", null);
+        if (cursorTerrminales.moveToFirst()) {
+            do {
+                LatLng terminal = new LatLng(cursorTerrminales.getDouble(0), cursorTerrminales.getDouble(1));
+                String nombre = cursorTerrminales.getString(2);
+                mMap.addMarker(new MarkerOptions()
+                        .position(terminal)
+                        .title(nombre)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.icono_terminal)));
+            } while (cursorTerrminales.moveToNext());
+            cursorTerrminales.close();
+        }
+    }
+
+    LocationListener locListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+
+            actualizarUbicacion(location);
+        }
 
         @Override
-        protected String doInBackground(String... strings) {
-            String text = "";
-            BufferedReader reader = null;
+        public void onStatusChanged(String provider, int status, Bundle extras) {
 
+        }
 
-            // Send data
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+
+    public void buscarHaceId(String hora, String ciudadOrigen, String ciudadDestino,int busId){
+        try{
+            String getHora = hora;
+            String getCiudadOrigen = ciudadOrigen;
+            String getCiudadDestino = ciudadDestino;
+            int getBusId = busId;
+
+            if(getHora.equals("")||getCiudadOrigen.equals("")||getCiudadDestino.equals(""))
+            {
+                //Toast.makeText(ctx, "Inserte campos validos", Toast.LENGTH_LONG).show();
+            }
+            else
+            {
+                BackGround b = new BackGround();
+                b.execute(getHora,getCiudadOrigen,getCiudadDestino,String.valueOf(getBusId));
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void onClick(View v) {
+
+    }
+
+    class BackGround extends AsyncTask<String, String, String>
+    {
+
+        @Override
+        protected String doInBackground(String... params) {
+            String hora = params[0];
+            String ciuOri = params[1];
+            String ciuDes = params[2];
+            String busId = params[3];
+            String data="";
+            int tmp;
+
+            try {
+                URL url = new URL("http://www.busearch.pe.hu/buscarhaceid.php");
+                String urlParams = "Hora="+hora+"&CiudadOrigen="+ciuOri+"&CiudadDestino="+ciuDes+"&BusId="+busId;
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setDoOutput(true);
+                OutputStream os = httpURLConnection.getOutputStream();
+                os.write(urlParams.getBytes());
+                os.flush();
+                os.close();
+
+                InputStream is = httpURLConnection.getInputStream();
+                while((tmp=is.read())!=-1){
+                    data+= (char)tmp;
+                }
+
+                is.close();
+                httpURLConnection.disconnect();
+
+                return data;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return "Exception: "+e.getMessage();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "Exception: "+e.getMessage();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s)
+        {
+            String hora,ciuOri,ciuDes,busId,haid;
             try {
 
-                // Defined URL  where to send data
-                URL url = new URL("http://192.168.1.7:8080/Usuario/Actualizar?longitud=" + strings[0] + "&latitud=" + strings[1]+ "&correo=" + strings[2]);
+                JSONObject root = new JSONObject(s);
+                haid = root.getString("HaceId");
+                haceid = Integer.parseInt(haid);
 
-                // Send POST data request
-
-                URLConnection conn = url.openConnection();
-                conn.setDoOutput(true);
-
-                // Get the server response
-
-                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                StringBuilder sb = new StringBuilder();
-                String line = null;
-
-                // Read Server Response
-                while ((line = reader.readLine()) != null) {
-                    // Append server response in string
-                    sb.append(line + "\n");
-                }
-
-
-                text = sb.toString();
-            } catch (Exception ex) {
-                String mensaje = ex.getMessage();
-            } finally {
-                try {
-
-                    reader.close();
-                } catch (Exception ex) {
-                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                //Toast.makeText(ctx, "Datos no validos", Toast.LENGTH_LONG).show();
             }
 
-            // Show response on activity
-            return text;
-
-            //Snackbar.make(view,text, Snackbar.LENGTH_LONG).setAction("Action", null).show();
         }
     }
-
-    public void onLocationChanged(Location location) {
-        GPSTracker gps = new GPSTracker(this);
-        double lon = gps.getLongitude();
-        double lat = gps.getLatitude();
-
-        String correo="";
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
-        Account[] accounts = AccountManager.get(this).getAccounts();
-        for (Account account : accounts) {
-            if (emailPattern.matcher(account.name).matches()) {
-                correo = (account.name).toString();
-
-            }
-        }
-        UsuarioDAO usuario = new UsuarioDAO((this));
-        Usuario usu = usuario.buscar(correo);
-        int usu_id = usu.getId();
-        ChoferDAO chof = new ChoferDAO(this);
-        Chofer chofer = chof.buscar(usu_id);
-        int online = chofer.getOnline();
-
-
-        LocationManager locationManager=null;
-        try {
-
-            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        } catch (SecurityException se) {
-        }
-
-        if (location != null) {
-            new Sender().execute(String.valueOf(location.getLongitude()), String.valueOf(location.getLatitude()), correo);
-        }
-
-
-
-
-        usuario.modificar(usu.getId(),lon,lat,usu.getCorreo());
-
-
-        longi = (TextView) findViewById(R.id.txtLong);
-        lati = (TextView) findViewById(R.id.txtLat);
-        longi.setText("Longitud: "+gps.getLongitude());
-        lati.setText("Latitud: "+gps.getLatitude());
-
-
-    }
-
-    public void onClickActualizar(View v){
-
-
-
-    }
-
 
 }
